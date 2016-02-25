@@ -42,10 +42,6 @@ public class Messenger {
    /**
     * Creates a new instance of Messenger
     *
-    * @param hostname the MySQL or PostgreSQL server hostname
-    * @param database the name of the database
-    * @param username the user name used to login to the database
-    * @param password the user login password
     * @throws java.sql.SQLException when failed to make a connection.
     */
    public Messenger (String dbname, String dbport, String user, String passwd) throws SQLException {
@@ -274,7 +270,7 @@ public class Messenger {
                 System.out.println(".........................");
                 System.out.println("9. Log out");
                 switch (readChoice()){
-                   case 1: AddToContact(esql); break;
+                   case 1: AddToContact(esql, authorisedUser); break;
                    case 2: ListContacts(esql); break;
                    case 3: NewMessage(esql); break;
                    case 9: usermenu = false; break;
@@ -372,14 +368,45 @@ public class Messenger {
          return null;
       }catch(Exception e){
          System.err.println (e.getMessage ());
-         return null;
       }
    }//end
 
-   public static void AddToContact(Messenger esql){
-      // Your code goes here.
-      // ...
-      // ...
+    public static void AddToBlock(Messenger esql, String user){
+        try {
+            System.out.print("\tWho do you want to block?: ");
+            String contact = in.readLine();
+            String query = String.format("SELECT block_list FROM usr WHERE login='%s'", user);
+            List<List<String>> records = esql.executeQueryAndReturnResult(query);
+            if (records.isEmpty()) {
+                System.out.print("no block_list for user found");
+                return;
+            }
+
+            query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')", records.get(0).get(0), contact);
+            esql.executeUpdate(query);
+
+        }catch(Exception e){
+            System.err.println (e.getMessage ());
+        }
+    }//end
+   public static void AddToContact(Messenger esql, String user){
+       try {
+           System.out.print("\tWho do you want to add to contacts?: ");
+           String contact = in.readLine();
+           String query = String.format("SELECT contact_list FROM usr WHERE login='%s'", user);
+           List<List<String>> records = esql.executeQueryAndReturnResult(query);
+           if (records.isEmpty()) {
+               System.out.print("no contact_list for user found");
+               return;
+           }
+
+           query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')", records.get(0).get(0), contact);
+           esql.executeUpdate(query);
+
+       }catch(Exception e){
+           System.err.println (e.getMessage ());
+           return;
+       }
    }//end
 
    public static void ListContacts(Messenger esql){
