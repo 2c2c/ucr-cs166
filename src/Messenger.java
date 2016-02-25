@@ -271,7 +271,7 @@ public class Messenger {
                 System.out.println("9. Log out");
                 switch (readChoice()){
                    case 1: AddToContact(esql, authorisedUser); break;
-                   case 2: ListContacts(esql); break;
+                   case 2: ListContacts(esql, authorisedUser); break;
                    case 3: NewMessage(esql); break;
                    case 9: usermenu = false; break;
                    default : System.out.println("Unrecognized choice!"); break;
@@ -368,6 +368,7 @@ public class Messenger {
          return null;
       }catch(Exception e){
          System.err.println (e.getMessage ());
+          return null;
       }
    }//end
 
@@ -405,14 +406,19 @@ public class Messenger {
 
        }catch(Exception e){
            System.err.println (e.getMessage ());
-           return;
        }
    }//end
 
-   public static void ListContacts(Messenger esql){
-      // Your code goes here.
-      // ...
-      // ...
+    public static void ListContacts(Messenger esql, String user){
+        try{
+            String query = String.format("SELECT contact_list FROM usr WHERE login='%s'", user);
+            List<List<String>> records = esql.executeQueryAndReturnResult(query);
+            query = String.format("SELECT list_member FROM user_list_contains WHERE list_id='%s'", records.get(0).get(0));
+            esql.executeQueryAndPrintResult(query);
+        }catch(Exception e){
+            System.err.println (e.getMessage ());
+            return;
+        }
    }//end
 
    public static void NewMessage(Messenger esql){
