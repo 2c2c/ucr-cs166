@@ -245,7 +245,8 @@ public class Messenger {
          String dbname = args[0];
          String dbport = args[1];
          String user = args[2];
-         esql = new Messenger (dbname, dbport, user, "");
+         String pw = "Postgres1234";
+         esql = new Messenger (dbname, dbport, user, pw);
 
          boolean keepon = true;
          while(keepon) {
