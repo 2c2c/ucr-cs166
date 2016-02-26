@@ -24,11 +24,6 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * This class defines a simple embedded SQL utility class that is designed to
- * work with PostgreSQL JDBC drivers.
- *
- */
 public class Messenger {
 
    // reference to physical database connection.
@@ -252,7 +247,7 @@ public class Messenger {
             System.out.println("1. Create user");
             System.out.println("2. Log in");
             System.out.println("9. < EXIT");
-            String authorisedUser = null;
+             Usr authorisedUser = null;
             switch (readChoice()){
                case 1: CreateUser(esql); break;
                case 2: authorisedUser = LogIn(esql); break;
@@ -272,7 +267,7 @@ public class Messenger {
                 switch (readChoice()){
                    case 1: AddToContact(esql, authorisedUser); break;
                    case 2: ListContacts(esql, authorisedUser); break;
-                   case 3: NewMessage(esql); break;
+                   case 3: NewMessage(esql, authorisedUser); break;
                    case 9: usermenu = false; break;
                    default : System.out.println("Unrecognized choice!"); break;
                 }
@@ -354,54 +349,53 @@ public class Messenger {
     * Check log in credentials for an existing user
     * @return User login or null is the user does not exist
     **/
-   public static String LogIn(Messenger esql){
-      try{
-         System.out.print("\tEnter user login: ");
-         String login = in.readLine();
-         System.out.print("\tEnter user password: ");
-         String password = in.readLine();
+   public static Usr LogIn(Messenger esql){
+       try {
+           System.out.print("\tEnter user login: ");
+           String login = in.readLine();
+           System.out.print("\tEnter user password: ");
+           String password = in.readLine();
 
-         String query = String.format("SELECT * FROM Usr WHERE login = '%s' AND password = '%s'", login, password);
-         int userNum = esql.executeQuery(query);
-	 if (userNum > 0)
-		return login;
-         return null;
-      }catch(Exception e){
-         System.err.println (e.getMessage ());
-          return null;
-      }
+           String query = String.format("SELECT * FROM Usr WHERE login = '%s' AND password = '%s'", login, password);
+           List<List<String>> records = esql.executeQueryAndReturnResult(query);
+
+           if (records.isEmpty()) {
+               return null;
+           }
+
+           // only one record will get returned: the user we want.
+           List<String> inner_list = records.get(0);
+
+           // apply all fields to usr constructor
+           Usr user = new Usr(inner_list.get(0), inner_list.get(1), inner_list.get(2), inner_list.get(3),
+                   inner_list.get(4), inner_list.get(5));
+
+           return user;
+       }catch(Exception e){
+           System.err.println (e.getMessage ());
+           return null;
+       }
    }//end
 
-    public static void AddToBlock(Messenger esql, String user){
+
+    public static void AddToBlock(Messenger esql, Usr user){
         try {
             System.out.print("\tWho do you want to block?: ");
             String contact = in.readLine();
-            String query = String.format("SELECT block_list FROM usr WHERE login='%s'", user);
-            List<List<String>> records = esql.executeQueryAndReturnResult(query);
-            if (records.isEmpty()) {
-                System.out.print("no block_list for user found");
-                return;
-            }
 
-            query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')", records.get(0).get(0), contact);
+            String query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')", user.block_list, contact);
             esql.executeUpdate(query);
 
         }catch(Exception e){
             System.err.println (e.getMessage ());
         }
     }//end
-   public static void AddToContact(Messenger esql, String user){
+   public static void AddToContact(Messenger esql, Usr user){
        try {
            System.out.print("\tWho do you want to add to contacts?: ");
            String contact = in.readLine();
-           String query = String.format("SELECT contact_list FROM usr WHERE login='%s'", user);
-           List<List<String>> records = esql.executeQueryAndReturnResult(query);
-           if (records.isEmpty()) {
-               System.out.print("no contact_list for user found");
-               return;
-           }
 
-           query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')", records.get(0).get(0), contact);
+           String query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')", user.contact_list, contact);
            esql.executeUpdate(query);
 
        }catch(Exception e){
@@ -409,11 +403,9 @@ public class Messenger {
        }
    }//end
 
-    public static void ListContacts(Messenger esql, String user){
+    public static void ListContacts(Messenger esql, Usr user){
         try{
-            String query = String.format("SELECT contact_list FROM usr WHERE login='%s'", user);
-            List<List<String>> records = esql.executeQueryAndReturnResult(query);
-            query = String.format("SELECT list_member FROM user_list_contains WHERE list_id='%s'", records.get(0).get(0));
+            String query = String.format("SELECT list_member FROM user_list_contains WHERE list_id=%s", user.contact_list);
             esql.executeQueryAndPrintResult(query);
         }catch(Exception e){
             System.err.println (e.getMessage ());
@@ -421,11 +413,9 @@ public class Messenger {
         }
    }//end
 
-   public static void NewMessage(Messenger esql){
-      // Your code goes here.
-      // ...
-      // ...
-   }//end 
+   public static void NewMessage(Messenger esql, Usr user){
+
+   }//end
 
 
    public static void Query6(Messenger esql){
