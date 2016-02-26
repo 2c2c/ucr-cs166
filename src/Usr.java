@@ -14,5 +14,6 @@ public class Usr {
         this.status = status;
         this.block_list = block_list;
         this.contact_list = contact_list;
+
     }
 }

@@ -264,7 +264,6 @@ public class Messenger {
                 switch (readChoice()){
                    case 1: AddToContact(esql, authorisedUser); break;
                    case 2: ListContacts(esql, authorisedUser); break;
-                   case 3: NewMessage(esql, authorisedUser); break;
                    case 9: usermenu = false; break;
                    default : System.out.println("Unrecognized choice!"); break;
                 }
@@ -410,16 +409,6 @@ public class Messenger {
         }
    }//end
 
-   public static void NewMessage(Messenger esql, Usr user) throws IOException {
-       System.out.print("\tWho to message?: ");
-       String contact = in.readLine();
-       System.out.print("\tWhat to say?: ");
-       String message = in.readLine();
-
-
-
-
-   }//end
 
     public static void NewPrivateChat(Messenger esql, Usr user, String target) throws IOException, SQLException {
         // add to chat table
@@ -452,8 +441,31 @@ public class Messenger {
             esql.executeQuery(query);
 
         }
-
-
     }
 
+    public static Chat GetChat(Messenger esql, String chat_id) throws SQLException {
+        String query = String.format("SELECT * FROM chat WHERE chat_id=%s", chat_id);
+        List<List<String>> chat_result = esql.executeQueryAndReturnResult(query);
+
+        query = String.format("SELECT * FROM chat_list WHERE chat_id=%s", chat_id);
+        List<List<String>> chat_list_result = esql.executeQueryAndReturnResult(query);
+
+
+        Chat chat = new Chat(chat_result.get(0).get(0),
+                chat_result.get(0).get(1),
+                chat_result.get(0).get(2),
+                chat_list_result.get(0));
+
+        return chat;
+    }
+
+
+    public static void NewMessage(Messenger esql, Usr user, Chat chat ) throws IOException {
+
+
+
+
+
+    }//end
 }//end Messenger
+
