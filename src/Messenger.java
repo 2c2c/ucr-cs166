@@ -11,16 +11,13 @@
  */
 
 
+import java.io.*;
 import java.sql.DriverManager;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.io.File;
-import java.io.FileReader;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -413,15 +410,50 @@ public class Messenger {
         }
    }//end
 
-   public static void NewMessage(Messenger esql, Usr user){
+   public static void NewMessage(Messenger esql, Usr user) throws IOException {
+       System.out.print("\tWho to message?: ");
+       String contact = in.readLine();
+       System.out.print("\tWhat to say?: ");
+       String message = in.readLine();
+
+
+
 
    }//end
 
+    public static void NewPrivateChat(Messenger esql, Usr user, String target) throws IOException, SQLException {
+        // add to chat table
+        String query = String.format("insert into chat(chat_type, init_sender) VALUES('private', '%s')", user.login);
+        List<List<String>> chat = esql.executeQueryAndReturnResult(query);
 
-   public static void Query6(Messenger esql){
-      // Your code goes here.
-      // ...
-      // ...
-   }//end Query6
+        //add sender to chat_list table
+        query = String.format("insert into chat_list(chat_id, member) VALUES('%s', '%s')", chat.get(0).get(0), user.login);
+        esql.executeQuery(query);
+
+        //add receiver to chat_list table
+        query = String.format("insert into chat_list(chat_id, member) VALUES('%s', '%s')", chat.get(0).get(0), target);
+        esql.executeQuery(query);
+
+    }
+
+    public static void NewGroupChat(Messenger esql, Usr user, List<String> targets) throws SQLException {
+        // add to chat table
+        String query = String.format("insert into chat(chat_type, init_sender) VALUES('private', '%s')", user.login);
+        List<List<String>> chat = esql.executeQueryAndReturnResult(query);
+
+        //add sender to chat_list table
+        query = String.format("insert into chat_list(chat_id, member) VALUES('%s', '%s')", chat.get(0).get(0), user.login);
+        esql.executeQuery(query);
+
+        //add receiver to chat_list table
+        for (String t : targets) {
+            query = String.format("insert into chat_list(chat_id, member) VALUES('%s', '%s')",
+                    chat.get(0).get(0), t);
+            esql.executeQuery(query);
+
+        }
+
+
+    }
 
 }//end Messenger
