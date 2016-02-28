@@ -16,3 +16,4 @@ public class Chat {
         this.members = members;
     }
 }
+

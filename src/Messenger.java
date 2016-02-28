@@ -18,6 +18,7 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -460,12 +461,32 @@ public class Messenger {
     }
 
 
-    public static void NewMessage(Messenger esql, Usr user, Chat chat ) throws IOException {
+    public static void NewMessage(Messenger esql, Usr user, Chat chat, String text) throws IOException, SQLException {
 
+        Date d = new Date();
 
-
-
-
+        String query = String.format("INSERT INTO message(msg_text, msg_timestamp, sender_login, chat_id) VALUES('%s','%s','%s', %s)",
+                text, d.toString(), user.login, chat.chat_id);
+        esql.executeUpdate(query);
     }//end
+
+
+    /*
+    should not work from initial sender
+     */
+    public static void RemoveFromChat(Messenger esql, Usr new_user, Chat chat) throws SQLException {
+        String query = String.format("DELETE FROM chat_list WHERE chat_id=%s AND member='%s'",
+                chat.chat_id, new_user.login);
+        esql.executeUpdate(query);
+    }
+
+    /*
+    should not work from initial sender
+     */
+    public static void AddToChat(Messenger esql, Usr new_user, Chat chat) throws SQLException {
+        String query = String.format("INSERT INTO chat_list(chat_id, member) VALUES(%s, '%s')",
+                chat.chat_id, new_user.login);
+        esql.executeUpdate(query);
+    }
 }//end Messenger
 
