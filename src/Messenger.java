@@ -353,52 +353,38 @@ public class Messenger {
            System.out.print("\tEnter user password: ");
            String password = in.readLine();
 
-           String query = String.format("SELECT * FROM Usr WHERE login = '%s' AND password = '%s'", login, password);
-           List<List<String>> records = esql.executeQueryAndReturnResult(query);
+           return GetUser(esql, login, password);
 
-           if (records.isEmpty()) {
-               return null;
-           }
-
-           // only one record will get returned: the user we want.
-           List<String> inner_list = records.get(0);
-
-           // apply all fields to usr constructor
-           Usr user = new Usr(inner_list.get(0), inner_list.get(1), inner_list.get(2), inner_list.get(3),
-                   inner_list.get(4), inner_list.get(5));
-
-           return user;
        }catch(Exception e){
            System.err.println (e.getMessage ());
            return null;
        }
    }//end
 
-
     public static void AddToBlock(Messenger esql, Usr user){
         try {
             System.out.print("\tWho do you want to block?: ");
-            String contact = in.readLine();
+            String to_block = in.readLine();
 
-            String query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')", user.block_list, contact);
-            esql.executeUpdate(query);
+            Block(esql, user, to_block);
 
         }catch(Exception e){
             System.err.println (e.getMessage ());
         }
     }//end
-   public static void AddToContact(Messenger esql, Usr user){
-       try {
-           System.out.print("\tWho do you want to add to contacts?: ");
-           String contact = in.readLine();
 
-           String query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')", user.contact_list, contact);
-           esql.executeUpdate(query);
 
-       }catch(Exception e){
-           System.err.println (e.getMessage ());
-       }
-   }//end
+    public static void AddToContact(Messenger esql, Usr user){
+        try {
+            System.out.print("\tWho do you want to add to contacts?: ");
+            String contact = in.readLine();
+
+            Add(esql, user, contact);
+
+        }catch(Exception e){
+            System.err.println (e.getMessage ());
+        }
+    }//end
 
     public static void ListContacts(Messenger esql, Usr user){
         try{
@@ -408,8 +394,45 @@ public class Messenger {
             System.err.println (e.getMessage ());
             return;
         }
-   }//end
+    }//end
 
+
+
+
+    public static Usr GetUser(Messenger esql, String login, String password) throws SQLException {
+        String query = String.format("SELECT * FROM Usr WHERE login = '%s' AND password = '%s'",
+                login, password);
+        List<List<String>> records = esql.executeQueryAndReturnResult(query);
+
+        if (records.isEmpty()) {
+            return null;
+        }
+
+        // only one record will get returned: the user we want.
+        List<String> inner_list = records.get(0);
+
+        // apply all fields to usr constructor
+        Usr user = new Usr(inner_list.get(0), inner_list.get(1), inner_list.get(2), inner_list.get(3),
+                inner_list.get(4), inner_list.get(5));
+
+        return user;
+
+    }
+
+
+    public static void Block(Messenger esql, Usr user, String target) throws SQLException {
+        String query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')"
+                , user.block_list, target);
+        esql.executeUpdate(query);
+
+    }
+
+    public static void Add(Messenger esql, Usr user, String target) throws SQLException {
+        String query = String.format("INSERT INTO user_list_contains(list_id, list_member) VALUES('%s', '%s')"
+                , user.contact_list, target);
+        esql.executeUpdate(query);
+
+    }
 
     public static void NewPrivateChat(Messenger esql, Usr user, String target) throws IOException, SQLException {
         // add to chat table
