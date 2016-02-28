@@ -353,7 +353,7 @@ public class Messenger {
            System.out.print("\tEnter user password: ");
            String password = in.readLine();
 
-           return GetUser(esql, login, password);
+           return GetUser(esql, login);
 
        }catch(Exception e){
            System.err.println (e.getMessage ());
@@ -399,14 +399,22 @@ public class Messenger {
 
 
 
-    public static Usr GetUser(Messenger esql, String login, String password) throws SQLException {
-        String query = String.format("SELECT * FROM Usr WHERE login = '%s' AND password = '%s'",
+    public static boolean Validate(Messenger esql, String login, String password) throws SQLException {
+        String query = String.format("SELECT * FROM Usr WHERE login = '%s' AND password='%s'",
                 login, password);
         List<List<String>> records = esql.executeQueryAndReturnResult(query);
 
         if (records.isEmpty()) {
-            return null;
+            return false;
         }
+
+        return true;
+    }
+    public static Usr GetUser(Messenger esql, String login) throws SQLException {
+        String query = String.format("SELECT * FROM Usr WHERE login = '%s'",
+                login);
+        List<List<String>> records = esql.executeQueryAndReturnResult(query);
+
 
         // only one record will get returned: the user we want.
         List<String> inner_list = records.get(0);
@@ -491,11 +499,11 @@ public class Messenger {
         String query = String.format("INSERT INTO message(msg_text, msg_timestamp, sender_login, chat_id) VALUES('%s','%s','%s', %s)",
                 text, d.toString(), user.login, chat.chat_id);
         esql.executeUpdate(query);
-    }//end
+    }
 
 
     /*
-    should not work from initial sender
+    note: initial sender should only be able to add/remove
      */
     public static void RemoveFromChat(Messenger esql, Usr new_user, Chat chat) throws SQLException {
         String query = String.format("DELETE FROM chat_list WHERE chat_id=%s AND member='%s'",
@@ -504,12 +512,12 @@ public class Messenger {
     }
 
     /*
-    should not work from initial sender
+    note: initial sender should only be able to add/remove
      */
     public static void AddToChat(Messenger esql, Usr new_user, Chat chat) throws SQLException {
         String query = String.format("INSERT INTO chat_list(chat_id, member) VALUES(%s, '%s')",
                 chat.chat_id, new_user.login);
         esql.executeUpdate(query);
     }
-}//end Messenger
+}
 
