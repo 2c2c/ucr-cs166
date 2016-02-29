@@ -348,8 +348,7 @@ public class Messenger {
 
             String query = String.format(
                     "INSERT INTO USR (phoneNum, login, password, block_list, contact_list) " + "VALUES ('%s','%s'," +
-                            "'%s',%s,%s)",
-                    phone, login, password, block_id, contact_id);
+                            "'%s',%s,%s)", phone, login, password, block_id, contact_id);
 
             esql.executeUpdate(query);
             System.out.println("User successfully created!");
@@ -412,6 +411,22 @@ public class Messenger {
             return;
         }
     }//end
+
+
+
+
+
+    public static List<String> GetContacts(Messenger esql, Usr user) throws SQLException {
+        String query = String.format("SELECT list_member FROM user_list_contains WHERE list_id=%s", user.contact_list);
+        List<List<String>> records = esql.executeQueryAndReturnResult(query);
+        return records.get(0);
+    }
+
+    public static List<String> GetBlocked(Messenger esql, Usr user) throws SQLException {
+        String query = String.format("SELECT list_member FROM user_list_contains WHERE list_id=%s", user.block_list);
+        List<List<String>> records = esql.executeQueryAndReturnResult(query);
+        return records.get(0);
+    }
 
 
     public static boolean Validate(Messenger esql, String login, String password) throws SQLException {
