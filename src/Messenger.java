@@ -413,9 +413,6 @@ public class Messenger {
     }//end
 
 
-
-
-
     public static List<String> GetContacts(Messenger esql, Usr user) throws SQLException {
         String query = String.format("SELECT list_member FROM user_list_contains WHERE list_id=%s", user.contact_list);
         List<List<String>> records = esql.executeQueryAndReturnResult(query);
@@ -527,6 +524,15 @@ public class Messenger {
         String query = String.format("INSERT INTO message(msg_text, msg_timestamp, sender_login, chat_id) VALUES" + "" +
                                              "('%s','%s','%s', %s)", text, d.toString(), user.login, chat.chat_id);
         esql.executeUpdate(query);
+    }
+
+    public static Message GetMessages(Messenger esql, Chat chat) throws SQLException {
+        String query = String.format("SELECT * FROM message WHERE chat_id=%s", chat.chat_id);
+        List<List<String>> records = esql.executeQueryAndReturnResult(query);
+        List<String> messages = records.get(0);
+
+        Message msg = new Message(messages.get(0), messages.get(1), messages.get(2), messages.get(3), messages.get(4));
+        return msg;
     }
 
 
