@@ -1,6 +1,8 @@
 package son.craig.chat.app;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class User {
 	private String phoneNum;
@@ -76,4 +78,45 @@ public class User {
 		}
 		return true;
 	}//end
+	public boolean updateUserStatus() {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			//Creating empty contact\block lists for a user
+			connection.executeUpdate("Update usr set status='"+status+"' where login='"+login+"'");
+			System.out.println ("User status has been updated!");
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+			return false;
+		}
+		return true;
+	}
+	public List<List<String>> getUserContactList() {
+		List<List<String>> result = null;
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			System.out.println("Select list_member from usr u, user_list_contains ulc " +
+					"where u.block_list = ulc.list_id AND list_id = "+contact_list);
+			result = connection.executeQueryAndReturnResult("Select list_member from usr u, user_list_contains ulc " +
+					"where u.contact_list = ulc.list_id AND list_id = "+contact_list);	
+			
+			return result;
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+		return result;	
+	}
+	public List<List<String>> getUserInfo() {
+		List<List<String>> result = null;
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			//Creating empty contact\block lists for a user
+			String query = "Select * from usr where login ='"+login+"'";
+			System.out.println(query);
+			result = connection.executeQueryAndReturnResult(query);	
+			return result;
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+		return result;	
+	}
 }

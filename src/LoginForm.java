@@ -64,9 +64,10 @@ public class LoginForm extends JFrame {
 					e.printStackTrace();
 				}
 				if(count == 1) {
-					MainForm regFace = new MainForm();
+					MainForm regFace = new MainForm(puname);
 					regFace.setVisible(true);
 					dispose();
+					//JOptionPane.showMessageDialog(null,regFace.getLogin(),"Warning",JOptionPane.WARNING_MESSAGE);
 				} else {
 					JOptionPane.showMessageDialog(null,"Wrong Password / Username","Warning",JOptionPane.WARNING_MESSAGE);
 					txuser.setText("Enter username...");

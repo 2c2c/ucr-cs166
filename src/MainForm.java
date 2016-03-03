@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -11,6 +14,7 @@ import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -19,20 +23,30 @@ import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
-
+// Son Testing 1
 public class MainForm extends JFrame {
 	private static final long serialVersionUID = 1L;
-	JButton bupdateStatus, bsendMessage, bBlock, bDelete;
+	private User currentUser;
+	JButton bupdateStatus, bsendMessage, bBlock, bDelete, bAdd;
 	JTextField txstatus;
 	private		JTabbedPane tabbedPane;
 	private		JPanel		panelContacts;
 	private		JPanel		panelBlockList;
 	private		JPanel		panelChats;
-	public MainForm() {
+
+	public MainForm(String login) {
 		super("ChatApp");
 		setSize(400,450);
 		setLocation(500,180);
-
+		currentUser = new User();
+		// retrieve current user details
+		currentUser.setLogin(login);
+		
+		List<List<String>> user = currentUser.getUserInfo();
+		List<String> temp = user.get(0);
+		currentUser.setStatus(temp.get(3).trim());
+		currentUser.setContact_list(Integer.parseInt(temp.get(5).trim()));
+		
 		JPanel topPanel = new JPanel();
 		topPanel.setLayout( new BorderLayout() );
 		getContentPane().add( topPanel );
@@ -51,24 +65,36 @@ public class MainForm extends JFrame {
 		setDefaultLookAndFeelDecorated(true);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setVisible(true);
+		actionUpdateStatus();
+		actionAddContact();
 	}
-
-
 
 	public void createContactsPage()
 	{
 		panelContacts = new JPanel();
 		panelContacts.setLayout( null );
 
-		txstatus = new JTextField("Lovely day :)");
+		txstatus = new JTextField(currentUser.getStatus());
 		txstatus.setBounds(10,10,250,40);
 		//Border used as padding
 		Border paddingBorder = BorderFactory.createEmptyBorder(10,10,10,10);
 		//JLabel will be involved for this border
 		Border border = BorderFactory.createLineBorder(Color.DARK_GRAY);
 		txstatus.setBorder(BorderFactory.createCompoundBorder(border,paddingBorder));
-
-		String labels[] = { "<html><b>Craig Collier</b> <i>Missing someone...</i> </html>","<html><b>Craig Collier</b> <i>Missing someone...</i> </html>","<html><b>Craig Collier</b> <i>Missing someone...</i> </html>" };
+		
+		// get user contact list
+		List<List<String>> contactList = currentUser.getUserContactList();
+		
+		String[] labels = new String[contactList.size()];
+		
+		for(int i=0; i < contactList.size(); i++) {
+			List<String> contact = contactList.get(i);
+			User temp = new User();
+			temp.setLogin(contact.get(0));
+			List<List<String>> friend = temp.getUserInfo();
+			String label = "<html><b>"+friend.get(0).get(0)+"</b> <i>"+friend.get(0).get(3)+"</i> </html>";
+			labels[i] = label;
+		}
 		JList list = new JList(labels);
 		list.setFont( list.getFont().deriveFont(Font.PLAIN) );
 		JScrollPane scrollPane = new JScrollPane(list);
@@ -95,9 +121,14 @@ public class MainForm extends JFrame {
 		bBlock.setBounds(150,330,80,40);
 		bBlock.setOpaque(true);
 		bBlock.setBackground(Color.GRAY);
+		
+		bAdd = new JButton("Add");
+		bAdd.setBounds(240,330,60,40);
+		bAdd.setOpaque(true);
+		bAdd.setBackground(Color.GRAY);
 
 		bDelete = new JButton("Delete");
-		bDelete.setBounds(240,330,130,40);
+		bDelete.setBounds(310,330,60,40);
 		bDelete.setOpaque(true);
 		bDelete.setBackground(Color.GRAY);
 
@@ -108,6 +139,7 @@ public class MainForm extends JFrame {
 		panelContacts.add(bsendMessage);
 		panelContacts.add(bBlock);
 		panelContacts.add(bDelete);
+		panelContacts.add(bAdd);
 	}
 
 	public void createBlockPage()
@@ -172,8 +204,29 @@ public class MainForm extends JFrame {
 		panelChats.add(panelGroup);
 
 	}
+	public void actionUpdateStatus() {
+		bupdateStatus.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				// pop up register form
+				currentUser.setStatus(txstatus.getText());
+				boolean result = currentUser.updateUserStatus();
+				if(result)
+					JOptionPane.showMessageDialog(null,"Your status has been updated","Info",JOptionPane.INFORMATION_MESSAGE);
+				else
+					JOptionPane.showMessageDialog(null,"Could not update status","Error",JOptionPane.ERROR_MESSAGE);
 
+			}
+		});
+	}
+	public void actionAddContact() {
+		bAdd.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				// pop up register form
+				new AddContactForm(currentUser.getContact_list());
+			}
+		});
+	}
 	public static void main(String[] args) {
-		new MainForm();
+		new MainForm("sonle");
 	}
 }
