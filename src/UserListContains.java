@@ -1,5 +1,3 @@
-package son.craig.chat.app;
-
 public class UserListContains {
 	private int listId;
 	private String listMember; // login name	

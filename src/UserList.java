@@ -1,5 +1,3 @@
-package son.craig.chat.app;
-
 public class UserList {
 	private int listId;
 	private String listType;

@@ -1,12 +1,13 @@
-package son.craig.chat.app;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -23,6 +24,8 @@ import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
+
 // Son Testing 1
 public class MainForm extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -158,8 +161,7 @@ public class MainForm extends JFrame {
 
 		panelBlockList.add(scrollPane, BorderLayout.CENTER);
 	}
-	public void createChatsPage()
-	{
+	public void createChatsPage() {
 		panelChats = new JPanel();
 		panelChats.setLayout(new BoxLayout(panelChats, BoxLayout.PAGE_AXIS));
 		GroupLayout layout = new GroupLayout(panelChats);  
@@ -175,26 +177,30 @@ public class MainForm extends JFrame {
                 "Message",
                 "Date",
                 "Delete"};
-		Object[][] data = {
-			    {"Kathy", "How are you?",
-			     "Snowboarding", new Integer(5)},
-			    {"John", "How are you?",
-			     "Rowing", new Integer(3)},
-			    {"Sue", "How are you?",
-			     "Knitting", new Integer(2)},
-			    {"Jane", "How are you?",
-			     "Speed reading", new Integer(20)},
-			    {"Joe", "How are you?",
-			     "Pool", new Integer(10)}
-			};
-		JTable table = new JTable(data, columnNames);
+		DefaultTableModel dtm = new DefaultTableModel(columnNames, 0);
+
+		List<Chat> chats = Chat.GetAllChat(currentUser);
+		List<Chat> group_chats = chats.stream().filter(c-> c.chat_type.equals("group")).collect(Collectors.toList());
+		List<Chat> private_chats = chats.stream().filter(c-> c.chat_type.equals("private")).collect(Collectors.toList());
+
+		for (Chat c : group_chats) {
+			// remove loggedin user from list of chat members
+			List<String> filtered_members = c.members.stream().filter(m-> !m.equals(currentUser.getLogin())).collect(Collectors.toList());
+			String joined_members = String.join(",", filtered_members);
+
+			Message latest_msg = Message.LatestMessage(c);
+
+			dtm.addRow(new String[]{joined_members, latest_msg.msg_text, latest_msg.msg_timestamp});
+		}
+
+		JTable table = new JTable(dtm);
 		JScrollPane scrollPane = new JScrollPane(table);
 		table.setFillsViewportHeight(true);
 		table.setShowHorizontalLines(true);
 		table.setShowVerticalLines(true);
 		table.setShowGrid(true);
 		panelPrivate.add(scrollPane);
-		
+
 		
 		JPanel panelGroup = new JPanel();
 		panelGroup.setBorder(new TitledBorder(new EtchedBorder(), "Group"));
@@ -222,11 +228,11 @@ public class MainForm extends JFrame {
 		bAdd.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ae) {
 				// pop up register form
-				new AddContactForm(currentUser.getContact_list());
+				// new AddContactForm(currentUser.getContact_list());
 			}
 		});
 	}
 	public static void main(String[] args) {
-		new MainForm("sonle");
+		new MainForm("Luz");
 	}
 }

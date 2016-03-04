@@ -1,7 +1,4 @@
-package son.craig.chat.app;
-
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class User {
