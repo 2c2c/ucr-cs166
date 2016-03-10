@@ -1,0 +1,59 @@
+package son.craig.chat.app;
+
+import java.util.List;
+
+public class ChatList {
+	public int getChatId() {
+		return chatId;
+	}
+	public void setChatId(int chatId) {
+		this.chatId = chatId;
+	}
+	public String getMember() {
+		return member;
+	}
+	public void setMember(String member) {
+		this.member = member;
+	}
+	private int chatId;
+	private String member;
+	public List<List<String>> getChatMember() {
+		List<List<String>> result = null;
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "Select c.chat_id,member,init_sender from chat c,chat_list cl where c.chat_id = cl.chat_id AND c.chat_id ="+chatId;
+			System.out.println(query);
+			result = connection.executeQueryAndReturnResult(query);	
+			return result;
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+		return result;	
+	}
+	public boolean addChatMember() {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "Insert into chat_list values("+chatId+",'"+member+"' )";
+			System.out.println(query);
+			connection.executeUpdate(query);
+			System.out.println ("Reciever has been added!");
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+			return false;
+		}
+		return true;
+	}
+	public boolean deleteChatMember() {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "Delete from chat_list where chat_id="+chatId+" AND member='"+member+"'";
+			System.out.println(query);
+			connection.executeUpdate(query);
+			System.out.println ("Reciever has been deleted!");
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+			return false;
+		}
+		return true;
+	}
+}
