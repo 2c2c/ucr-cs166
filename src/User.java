@@ -81,7 +81,6 @@ public class User {
 	public boolean updateUserStatus() {
 		try{
 			ConnectionSQL connection = new ConnectionSQL();
-			//Creating empty contact\block lists for a user
 			connection.executeUpdate("Update usr set status='"+status+"' where login='"+login+"'");
 			System.out.println ("User status has been updated!");
 		}catch(Exception e){
@@ -91,25 +90,33 @@ public class User {
 		return true;
 	}
 	public List<List<String>> getUserContactList() {
-		List<List<String>> result = null;
 		try{
 			ConnectionSQL connection = new ConnectionSQL();
 			System.out.println("Select list_member from usr u, user_list_contains ulc " +
 					"where u.block_list = ulc.list_id AND list_id = "+contact_list);
-			result = connection.executeQueryAndReturnResult("Select list_member from usr u, user_list_contains ulc " +
+			return connection.executeQueryAndReturnResult("Select list_member from usr u, user_list_contains ulc " +
 					"where u.contact_list = ulc.list_id AND list_id = "+contact_list);	
-			
-			return result;
 		}catch(Exception e){
 			System.err.println (e.getMessage ());
 		}
-		return result;	
+		return null;	
+	}
+	public List<List<String>> getUserBlockList() {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			System.out.println("Select list_member from usr u, user_list_contains ulc " +
+					"where u.block_list = ulc.list_id AND list_id = "+block_list);
+			return connection.executeQueryAndReturnResult("Select list_member from usr u, user_list_contains ulc " +
+					"where u.block_list = ulc.list_id AND list_id = "+block_list);	
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+		return null;
 	}
 	public List<List<String>> getUserInfo() {
 		List<List<String>> result = null;
 		try{
 			ConnectionSQL connection = new ConnectionSQL();
-			//Creating empty contact\block lists for a user
 			String query = "Select * from usr where login ='"+login+"'";
 			System.out.println(query);
 			result = connection.executeQueryAndReturnResult(query);	
@@ -118,5 +125,55 @@ public class User {
 			System.err.println (e.getMessage ());
 		}
 		return result;	
+	}
+	public List<List<String>> getUserMessage() {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "select chat_id,array_to_string(array_agg(distinct trim('member')),',') as member, msg_text, msg_timestamp,init_sender,sender_login,chat_type from " +
+					"(select c.chat_id, chat_type,date_trunc('seconds',msg_timestamp::timestamp) as msg_timestamp, msg_text,member,sender_login,phonenum,init_sender from usr u, chat c, chat_list cl, message m "+ 
+						"where c.init_sender = u.login AND cl.chat_id = c.chat_id AND m.chat_id = c.chat_id AND "+
+						"(u.login = '"+login+"' OR cl.member ='"+login+"') AND init_sender NOT IN (" +
+						"select list_member from usr u1, user_list_contains ulc1 where u1.block_list = ulc1.list_id AND login='"+login+"') " +
+						"group by c.chat_id,chat_type,date_trunc('seconds',msg_timestamp::timestamp),msg_text,member,sender_login,phonenum,init_sender " +
+						"order by date_trunc('seconds',msg_timestamp::timestamp) desc) as S group by chat_id,msg_text,msg_timestamp,init_sender,sender_login,chat_type order by date_trunc('seconds',msg_timestamp::timestamp) desc";
+			System.out.println(query);
+			return connection.executeQueryAndReturnResult(query);	
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+		return null;	
+	}
+	public List<List<String>> checkingFriend(String member) {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "select phonenum from usr where login = '"+member+"' AND login NOT IN (select list_member from usr u, user_list_contains uc where u.contact_list =  uc.list_id AND login='"+login+"')";
+			System.out.println(query);
+			return connection.executeQueryAndReturnResult(query);	
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+		return null;	
+	}
+	public List<List<String>> checkingContact(String member) {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "select login from usr where login = '"+member+"' AND login IN (select list_member from usr u, user_list_contains uc where u.contact_list =  uc.list_id AND login='"+login+"')";
+			System.out.println(query);
+			return connection.executeQueryAndReturnResult(query);	
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+		return null;	
+	}
+	public boolean deleteUser() {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			connection.executeUpdate("Delete from usr where login = '"+login+"'");
+			System.out.println ("User status has been deleted!");
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+			return false;
+		}
+		return true;
 	}
 }
