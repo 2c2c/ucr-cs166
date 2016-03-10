@@ -1,0 +1,79 @@
+package son.craig.chat.app;
+
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SpringLayout;
+
+public class EditMessageForm extends JFrame {
+	private static final long serialVersionUID = 1L;
+	private JButton bUpdate,bCancel;
+	private JTextArea txMessage;
+	private int currentMessageId;
+	private int currentlabelPos;
+
+	public EditMessageForm(String message, int messageId, int labelPos) {
+		super("Edit Message");
+		setSize(400,200);
+		setLocation(500,180);
+		currentMessageId = messageId;
+		currentlabelPos = labelPos;
+		//Set up the content pane.
+		JPanel panel = new JPanel(new BorderLayout());
+		
+		txMessage = new JTextArea();
+		txMessage.setBorder(BorderFactory.createEmptyBorder(10, 10, 100, 10));
+		txMessage.setText(message);
+		
+		JPanel panelMessageButton = new JPanel(new GridLayout(0,2));
+		bUpdate = new JButton("Update");
+		bCancel = new JButton("Cancel");
+		panelMessageButton.add(bUpdate);
+		panelMessageButton.add(bCancel);
+		
+		panel.add(txMessage,BorderLayout.CENTER);
+		panel.add(panelMessageButton,BorderLayout.SOUTH);
+		
+		getContentPane().add(panel);
+		setVisible(true);
+		actionAddContact();
+		actionCancle();
+		
+	}
+	public void actionAddContact() {
+		bUpdate.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				Message msg = new Message();
+				msg.setMessageId(currentMessageId);
+				msg.setMessageText(txMessage.getText());
+				boolean result = msg.updateMessage();
+				if (result) {
+					JOptionPane.showMessageDialog(null,"Message has been added","Info",JOptionPane.INFORMATION_MESSAGE);
+					SendMessageForm.name.get(currentlabelPos).setText(txMessage.getText());
+				}
+				else
+					JOptionPane.showMessageDialog(null,"Could not update message","Error",JOptionPane.ERROR_MESSAGE);
+			}
+		});
+	}
+	public void actionCancle() {
+		bCancel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				// pop up register form
+				setVisible(false);
+				dispose();
+			}
+		});
+	}
+}
