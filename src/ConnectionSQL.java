@@ -1,11 +1,20 @@
 package son.craig.chat.app;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.sql.Array;
+import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.DriverManager;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ConnectionSQL {
@@ -117,12 +126,40 @@ public class ConnectionSQL {
 		while (rs.next()){
 			List<String> record = new ArrayList<String>(); 
 			for (int i=1; i<=numCol; ++i) 
-				record.add(rs.getString (i)); 
+				record.add(rs.getString (i));
 			result.add(record); 
 		}//end while 
 		stmt.close (); 
 		return result; 
 	}//end executeQueryAndReturnResult
+	private String clobToString(java.sql.Clob data)
+	{
+	    final StringBuilder sb = new StringBuilder();
+
+	    try
+	    {
+	        final Reader         reader = data.getCharacterStream();
+	        final BufferedReader br     = new BufferedReader(reader);
+
+	        int b;
+	        while(-1 != (b = br.read()))
+	        {
+	            sb.append((char)b);
+	        }
+
+	        br.close();
+	    }
+	    catch (SQLException e)
+	    {
+	        return e.toString();
+	    }
+	    catch (IOException e)
+	    {
+	        return e.toString();
+	    }
+
+	    return sb.toString();
+	}
 	/**
 	 * Method to close the physical connection if it is open.
 	 */
@@ -142,5 +179,33 @@ public class ConnectionSQL {
 		if (rs.next())
 			return rs.getInt(1);
 		return -1;
+	}
+	public int sendMessage(String sender, String[] receivers, String message, String chat_type, int chatId) throws SQLException
+	{
+		CallableStatement proc = null;
+		try
+		{
+			proc = this._connection.prepareCall("{ call sendMessage(?,?,?,?,?) }");
+			proc.setString(1, sender);
+			final Array members =  this._connection.createArrayOf("varchar",receivers);  
+			proc.setArray(2, members);
+			proc.setString(3, message);
+			proc.setString(4, chat_type);
+			proc.setInt(5, chatId);
+			proc.registerOutParameter(1, Types.INTEGER);
+			proc.execute();
+			return Integer.parseInt(proc.getObject(1).toString());
+		}
+		finally
+		{
+			try
+			{
+				proc.close();
+			}
+			catch (SQLException e) {
+				return 0;
+			}
+			cleanup();
+		}
 	}
 }
