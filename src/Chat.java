@@ -1,19 +1,77 @@
+package son.craig.chat.app;
+
 import java.util.List;
 
-/*
-maps chat and chat_list table to an object
- */
 public class Chat {
-    public String chat_id;
-    public String chat_type;
-    public String init_sender;
-    public List<String> members;
-
-    public Chat(String chat_id, String chat_type, String init_sender, List<String> members) {
-        this.chat_id = chat_id;
-        this.chat_type = chat_type;
-        this.init_sender = init_sender;
-        this.members = members;
-    }
+	private int chatId;
+	private String chatType;
+	private String sender;
+	public int getChatId() {
+		return chatId;
+	}
+	public void setChatId(int chatId) {
+		this.chatId = chatId;
+	}
+	public String getChatType() {
+		return chatType;
+	}
+	public void setChatType(String chatType) {
+		this.chatType = chatType;
+	}
+	public String getSender() {
+		return sender;
+	}
+	public void setSender(String sender) {
+		this.sender = sender;
+	}
+	public List<List<String>> getChatInfo() {
+		List<List<String>> result = null;
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "Select * from chat where chat_id ="+chatId;
+			System.out.println(query);
+			result = connection.executeQueryAndReturnResult(query);	
+			return result;
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+		return result;	
+	}
+	public int getChatInfoByInitSender() {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "Select * from chat where init_sender ='"+sender+"'";
+			System.out.println(query);
+			return connection.executeQuery(query);	
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+		}
+		return 0;	
+	}
+	public boolean deleteChat() {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "Delete from chat where chat_id="+chatId;
+			System.out.println(query);
+			connection.executeUpdate(query);
+			System.out.println ("Chat has been deleted!");
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+			return false;
+		}
+		return true;
+	}
+	public boolean updateChatType() {
+		try{
+			ConnectionSQL connection = new ConnectionSQL();
+			String query = "Update chat set chat_type ='"+chatType+"' where chat_id="+chatId;
+			connection.executeUpdate(query);
+			System.out.println(query);
+			System.out.println ("Chat type has been updated!");
+		}catch(Exception e){
+			System.err.println (e.getMessage ());
+			return false;
+		}
+		return true;
+	}
 }
-

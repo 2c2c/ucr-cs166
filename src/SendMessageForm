@@ -1,0 +1,452 @@
+package son.craig.chat.app;
+
+import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+
+public class SendMessageForm extends JFrame {
+
+	private static final long serialVersionUID = 1L;
+	private JTextField txAddContact;
+	private	JPanel	panelChats;
+	private JList recieverList;
+	private JTextArea txMessage;
+	private JButton bSend, bCancel,bDelete,bAddContact;
+	private DefaultListModel listModel;
+	private JPanel panelMessageView;
+	private int numMsg = 0;
+	private int currentChatId = -1;
+	static List<JLabel> name;
+	List<JPanel> mButtons;
+	List<List<String>> messages;
+	Message msg;
+	private List<List<String>> chatInfo;
+	public SendMessageForm(int chatId, String[] recievers) {
+		super("Send Message");
+		setLocation(500,180);
+		currentChatId = chatId;
+		panelChats = new JPanel();
+
+		panelChats.setLayout(new BoxLayout(panelChats, BoxLayout.Y_AXIS));
+		GroupLayout layout = new GroupLayout(panelChats);  
+		layout.setAutoCreateGaps(true);
+		layout.setAutoCreateContainerGaps(true);
+
+		JPanel panelReciever = new JPanel(new BorderLayout());
+
+
+		panelReciever.setBorder(new TitledBorder(new EtchedBorder(), "To"));
+
+
+		listModel = new DefaultListModel(); 
+
+		if(chatId != -1) { // message exist
+			ChatList chatList = new ChatList();
+			chatList.setChatId(chatId);
+			List<List<String>> contactsList = chatList.getChatMember();
+			if(!contactsList.get(0).get(2).trim().equals(MainForm.currentUser.getLogin())) // add init_sender if not current user
+				listModel.addElement(contactsList.get(0).get(2).trim());
+			for(int i=0; i < contactsList.size(); i++) {
+				List<String> member = contactsList.get(i);
+				if(!member.get(1).trim().equals(MainForm.currentUser.getLogin()))
+					listModel.addElement(member.get(1));
+			}
+		}
+		else {
+			for(int i=0; i < recievers.length; i++) {
+				listModel.addElement(recievers[i]);
+			}
+		}
+		recieverList = new JList(listModel);
+		recieverList.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		recieverList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		recieverList.setFont( recieverList.getFont().deriveFont(Font.PLAIN) );
+		JScrollPane scrollPane = new JScrollPane(recieverList);
+
+		panelReciever.add(scrollPane,BorderLayout.CENTER);
+
+		// delete button, add contact if init_sender
+		Chat chat = new Chat();
+		chat.setChatId(chatId);
+		chatInfo = chat.getChatInfo();
+		bDelete = new JButton("Delete");
+		bAddContact = new JButton("Add Contact");
+		if(chatInfo.size() == 1) {
+			// check authorization of message
+			if(chatInfo.get(0).get(2).trim().equals(MainForm.currentUser.getLogin())) {
+				JPanel rBottom = new JPanel(new GridLayout(0,3));
+				txAddContact = new JTextField();
+				rBottom.add(bDelete);
+				rBottom.add(txAddContact);
+				rBottom.add(bAddContact);
+				panelReciever.add(rBottom,BorderLayout.SOUTH);
+			}
+		}
+		JPanel panelMessage = new JPanel(new BorderLayout());
+
+		panelMessage.setBorder(new TitledBorder(new EtchedBorder(), "Message"));
+		// load message related to current user 
+		panelMessageView = new JPanel(new GridLayout(0,1));
+		msg = new Message();
+		msg.setChatId(chatId);
+		messages = msg.getMessageByChatId(0);
+		//load older messages
+
+		if(messages.size() > 0) {
+			showMessage();
+		}
+		// text area
+		JPanel panelTextArea = new JPanel(new GridLayout(0,1));
+
+		txMessage = new JTextArea(8, 20);
+		txMessage.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		//txMessage.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+		panelTextArea.add(txMessage);
+
+		JPanel panelMessageButton = new JPanel(new GridLayout(0,2));
+		bSend = new JButton("Send");
+		bCancel = new JButton("Cancel");
+		panelMessageButton.add(bSend);
+		panelMessageButton.add(bCancel);		
+		panelMessage.add(panelTextArea,BorderLayout.NORTH);
+		panelMessage.add(panelMessageButton,BorderLayout.SOUTH);
+
+
+		panelChats.add(panelReciever);
+		panelChats.add(panelMessage);
+		JScrollPane scrollPane_message = new JScrollPane(panelMessageView);
+		panelMessage.add(scrollPane_message);
+
+
+		getContentPane().add( panelChats );
+		setDefaultLookAndFeelDecorated(true);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		pack();
+		setVisible(true);
+		actionCancle();
+		actionDeleteReciever();
+		actionSendMessage();
+		actionAddReciever();
+	}
+	public void showMessage() {
+		if(Integer.parseInt(messages.get(0).get(0)) > messages.size()) {
+			JButton bLoadOlderMessage = new JButton("View older message");
+			bLoadOlderMessage.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent ae) {
+					List<List<String>> oldMessage = msg.getMessageByChatId(messages.size());
+					messages.addAll(oldMessage);
+					System.out.println("oldMessage:"+oldMessage.size());
+					panelMessageView.removeAll();
+					panelMessageView.revalidate(); 
+					panelMessageView.repaint(); 
+					showMessage();
+				}
+			});
+			panelMessageView.add(bLoadOlderMessage);
+		}
+		name = new ArrayList<JLabel>();
+		mButtons = new ArrayList<JPanel>();
+		for(int i=0; i < messages.size(); i++) {
+			final List<String> message = messages.get(i);
+			String msg_text = message.get(1).trim(); 
+			String html1 = "<html><body style='width: ";
+			String html2 = "px'>";
+			name.add(new JLabel(html1 + "300" + html2 + msg_text));
+			String sender = "";
+			if(!message.get(3).trim().equals(MainForm.currentUser.getLogin())) {
+				List<List<String>> friend = MainForm.currentUser.checkingFriend(message.get(3));
+				if(friend.size() > 0) // not friend
+					sender = message.get(4).trim();
+				else { 
+					sender = message.get(3).trim();
+				}
+			}
+			else
+				sender = "You";
+			panelMessageView.add(name.get(i));	
+			TitledBorder title = BorderFactory.createTitledBorder("<html><b>"+sender+"</b> <i>"+message.get(2).trim()+"</i></html>");
+			name.get(i).setBorder(title);
+			// message buttons
+			mButtons.add(new JPanel());
+			if(message.get(3).trim().equals(MainForm.currentUser.getLogin())) { // check authorization of message, if ok can detele
+				JButton bDeleteMessage= new JButton("Delete");
+				final int mPos = i;
+				bDeleteMessage.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent ae) {
+						System.out.println("messages size :"+messages.size());
+						if(messages.size() == 1) { // about to delete whole chat{
+							Message msg = new Message();
+							msg.setMessageId(Integer.parseInt(message.get(5).trim()));
+							boolean result = msg.deleteMessage();
+							if(result) {
+								panelMessageView.remove(mButtons.get(mPos));
+								panelMessageView.revalidate(); 
+								panelMessageView.repaint(); 
+								panelMessageView.remove(name.get(mPos));
+								panelMessageView.revalidate(); 
+								panelMessageView.repaint(); 
+								messages.remove(mPos);
+								System.out.println("messages.remove(mPos):"+messages.size());
+								currentChatId = -1; // need to create new message
+							}
+							else {
+								JOptionPane.showMessageDialog(null,"Could not delete message","Error",JOptionPane.ERROR_MESSAGE);
+							}
+						}
+						else {
+							Message msg = new Message();
+							msg.setMessageId(Integer.parseInt(message.get(5).trim()));
+							boolean result = msg.deleteMessage();
+							if(result) {
+								panelMessageView.remove(mButtons.get(mPos));
+								panelMessageView.revalidate(); 
+								panelMessageView.repaint(); 
+								panelMessageView.remove(name.get(mPos));
+								panelMessageView.revalidate(); 
+								panelMessageView.repaint(); 
+								messages.remove(mPos);
+								System.out.println("messages.remove(mPos):"+messages.size());
+							}
+							else {
+								JOptionPane.showMessageDialog(null,"Could not delete message","Error",JOptionPane.ERROR_MESSAGE);
+							}
+						}
+					}
+				});
+				JButton bEditMessage= new JButton("Edit");
+				bEditMessage.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent ae) {
+						new EditMessageForm(message.get(1).trim(),Integer.parseInt(message.get(5).trim()),mPos);
+					}
+				});
+				
+				
+				mButtons.get(i).add(bDeleteMessage);
+				mButtons.get(i).add(bEditMessage);
+				
+				System.out.println("mButtons.size():"+mButtons.size());
+			}
+			panelMessageView.add(mButtons.get(i));
+		}
+	}
+	public void actionAddReciever() {
+		bAddContact.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				// check user exist
+				User friend = new User();
+				friend.setLogin(MainForm.currentUser.getLogin());
+				List<List<String>> fList = friend.checkingContact(txAddContact.getText());
+				System.out.println("fList.size():"+fList.size());
+				if(fList.size() == 0) { // not friend
+					JOptionPane.showMessageDialog(null,"Contact not exist","Error",JOptionPane.ERROR_MESSAGE);
+				}
+				else {
+					if(currentChatId != -1) { // exist message, add more member
+						// check chat exist
+						int numRecievers = recieverList.getModel().getSize();
+						String[] receiversList = new String[numRecievers+1];
+						for(int i=0; i < numRecievers; i++) {
+							receiversList[i] = recieverList.getModel().getElementAt(i).toString().trim();
+						}
+						receiversList[receiversList.length-1] = txAddContact.getText().trim(); // add new one
+						int chatId = MainForm.checkChatExist(receiversList);
+						if(chatId == -1) { 
+							// add to list first when user actually send message will add member
+							ChatList uc = new ChatList();
+							uc.setChatId(currentChatId);
+							uc.setMember(txAddContact.getText());
+							boolean result = uc.addChatMember();
+							if (result) {
+								listModel.addElement(txAddContact.getText());
+								// update chat_type to private or group depend on number or recievers
+								if(recieverList.getModel().getSize() == 1) {
+									Chat c = new Chat();
+									c.setChatId(currentChatId);
+									c.setChatType("private");
+									c.updateChatType();
+								}
+								else {
+									Chat c = new Chat();
+									c.setChatId(currentChatId);
+									c.setChatType("group");
+									c.updateChatType();
+								}
+								messages = msg.getMessageByChatId(0);
+								showMessage();
+								// update chat panel
+								MainForm.panelChats.removeAll();
+								MainForm.panelChats.repaint();
+								MainForm.panelChats.revalidate();
+								MainForm.createChatsPage();
+							}
+							else
+								JOptionPane.showMessageDialog(null,"Could not add more reciever","Error",JOptionPane.ERROR_MESSAGE);
+						}
+						else {// exist message with these reciever, not allow to add
+							JOptionPane.showMessageDialog(null,"Chat existed. Could not add more reciever","Error",JOptionPane.ERROR_MESSAGE);
+						}
+					}
+					else { // new message
+						listModel.addElement(txAddContact.getText());
+					}
+				}
+			}
+		});
+	}
+	public void actionDeleteReciever() {
+		bDelete.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				if(recieverList.getSelectedValue() != null) {
+					if(currentChatId == -1) { // new message
+						int[] selected = recieverList.getSelectedIndices();
+						for (int i = selected.length-1; i >=0; i--) {
+							listModel.removeElementAt(selected[i]);
+						}
+					}
+					else { // existing message
+						// check chat exist
+						int numRecievers = recieverList.getModel().getSize();
+						String[] receiversList = new String[numRecievers-1];
+						for(int i=0; i < numRecievers; i++) {
+							if(!recieverList.getModel().getElementAt(i).toString().trim().equals(recieverList.getSelectedValue().toString().trim()))
+								receiversList[i] = recieverList.getModel().getElementAt(i).toString().trim();
+						}
+						int chatId = MainForm.checkChatExist(receiversList);
+						if(chatId == -1)  { // ok to delete, no existing any chat with these member
+							int size = recieverList.getModel().getSize();
+							if(size == 1) { 
+								int reply = JOptionPane.showConfirmDialog(null, "You about to delete whole chat.Would you like to continue?", "Warning", JOptionPane.YES_NO_OPTION);
+						        if (reply == JOptionPane.YES_OPTION) {
+						        	ChatList uc = new ChatList();
+									uc.setChatId(currentChatId);
+									uc.setMember(recieverList.getSelectedValue().toString());
+									boolean result = uc.deleteChatMember();
+									if (result) {
+										int[] selected = recieverList.getSelectedIndices();
+										for (int i = selected.length-1; i >=0; i--) {
+											listModel.removeElementAt(selected[i]);
+										}								
+										// update chat_type to private or group depend on number or recievers
+										if(recieverList.getModel().getSize() == 1) {
+											Chat c = new Chat();
+											c.setChatId(currentChatId);
+											c.setChatType("private");
+											c.updateChatType();
+										}
+										else {
+											Chat c = new Chat();
+											c.setChatId(currentChatId);
+											c.setChatType("group");
+											c.updateChatType();
+										}
+										messages = msg.getMessageByChatId(0);
+										showMessage();
+										// update chat panel
+										MainForm.panelChats.removeAll();
+										MainForm.panelChats.repaint();
+										MainForm.panelChats.revalidate();
+										MainForm.createChatsPage();
+										
+										setVisible(false);
+										dispose();
+										
+									}
+									else {
+										JOptionPane.showMessageDialog(null,"Could not delete reciever","Error",JOptionPane.ERROR_MESSAGE);
+									}
+						        }
+							}
+						}
+						else {
+							JOptionPane.showMessageDialog(null,"Chat existed. Could not delete reciever","Error",JOptionPane.ERROR_MESSAGE);
+						}
+						
+					}
+				}
+			}
+		});
+	}
+	public void actionSendMessage() {
+		bSend.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				// count how many people he send, if 1 = private, > 1 = group
+				int numRecievers = recieverList.getModel().getSize();
+				String chatType = (numRecievers > 1) ? "group":"private";
+				String message = txMessage.getText();
+				String[] receiversList = new String[numRecievers];
+				for(int i=0; i < numRecievers; i++) {
+					receiversList[i] = recieverList.getModel().getElementAt(i).toString();
+				}
+				String sender = MainForm.currentUser.getLogin();
+				Message messenger = new Message();
+				if(currentChatId != -1) // send same person
+					currentChatId = messenger.sendMessage(sender, receiversList, message, chatType, currentChatId);
+				else
+					currentChatId = messenger.sendMessage(sender, receiversList, message, chatType, -1);
+				if (currentChatId != -1) {
+					//JOptionPane.showMessageDialog(null,"Messge Sent","Info",JOptionPane.INFORMATION_MESSAGE);
+					// add to message viewer
+					/*String html1 = "<html><body style='width: ";
+					String html2 = "px'>";
+					JLabel name = new JLabel(html1 + "300" + html2 + message);
+					DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					Date date = new Date();
+					panelMessageView.add(name);
+					TitledBorder title = BorderFactory.createTitledBorder("<html><b>You</b> <i>"+dateFormat.format(date)+"</i></html>");
+					name.setBorder(title);*/
+					// reload message
+					msg.setChatId(currentChatId);
+					messages = msg.getMessageByChatId(0);
+					showMessage();
+					// update chat panel
+					MainForm.panelChats.removeAll();
+					MainForm.panelChats.repaint();
+					MainForm.panelChats.revalidate();
+					MainForm.createChatsPage();
+				}
+				else
+					JOptionPane.showMessageDialog(null,"Could not send message","Error",JOptionPane.ERROR_MESSAGE);
+			}
+		});
+	}
+
+	public void actionCancle() {
+		bCancel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent ae) {
+				setVisible(false);
+				dispose();
+			}
+		});
+	}
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		//String[] name = {"Zola"};
+		//new SendMessageForm(name);
+	}
+
+}
